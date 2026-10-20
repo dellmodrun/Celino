@@ -69,6 +69,8 @@ npm start
 
 Production uses the included Docker Compose service, a persistent data mount and the shared Caddy edge.
 
+Production API: `https://ohmium.167-99-74-236.sslip.io/celino-api`
+
 ## Repository
 
 ```text

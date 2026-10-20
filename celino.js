@@ -30,7 +30,7 @@
     window.setTimeout(() => { copyContract.textContent = "COPY CA"; }, 1400);
   });
 
-  const API_ORIGIN = "https://celino.167-99-74-236.sslip.io";
+  const API_ORIGIN = "https://ohmium.167-99-74-236.sslip.io/celino-api";
   const walletTrigger = $("#walletTrigger");
   const walletDialog = $("#walletDialog");
   const walletList = $("#walletList");
