@@ -36,6 +36,14 @@ if ! grep -q 'CELINO_SHARED_ROUTE' "$CADDYFILE"; then
   }' "$CADDYFILE"
 fi
 
+# Preserve matcher order. Without an explicit route block Caddy may sort the
+# catch-all Ohmium reverse_proxy ahead of handle_path.
+if ! grep -q 'CELINO_ORDERED_ROUTE' "$CADDYFILE"; then
+  sed -i '/# CELINO_SHARED_ROUTE/i\  # CELINO_ORDERED_ROUTE\
+  route {' "$CADDYFILE"
+  sed -i '/reverse_proxy ohmium-core:4210/a\  }' "$CADDYFILE"
+fi
+
 cd /opt/cennomo
 docker compose -f docker-compose.production.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile
 docker compose -f docker-compose.production.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
