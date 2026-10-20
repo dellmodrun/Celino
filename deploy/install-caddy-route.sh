@@ -26,14 +26,23 @@ EOF
 fi
 
 # Reuse Ohmium's already-issued TLS endpoint while the dedicated sslip.io
-# certificate remains unavailable. handle_path removes /celino-api before the
-# request reaches Celino Core, so its public API contract remains /api/*.
+# certificate remains unavailable. The explicit uri rule removes /celino-api
+# before the request reaches Celino Core, preserving its /api/* contract.
 if ! grep -q 'CELINO_SHARED_ROUTE' "$CADDYFILE"; then
   sed -i '/^ohmium\.167-99-74-236\.sslip\.io {$/a\
   # CELINO_SHARED_ROUTE\
-  handle_path /celino-api/* {\
+  handle /celino-api/* {\
+    uri strip_prefix /celino-api\
     reverse_proxy celino-core:4320\
   }' "$CADDYFILE"
+fi
+
+# Upgrade the first shared-route form. Using handle_path next to a catch-all
+# handle is not grouped reliably by this Caddy release; two handle directives
+# are grouped and ordered by matcher specificity.
+if grep -q '^  handle_path /celino-api/\* {$' "$CADDYFILE"; then
+  sed -i '/^  handle_path \/celino-api\/\* {$/c\  handle /celino-api/* {\
+    uri strip_prefix /celino-api' "$CADDYFILE"
 fi
 
 # Put both applications in mutually-exclusive handle blocks. A bare fallback
