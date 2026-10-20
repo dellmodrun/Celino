@@ -61,11 +61,12 @@ if ! grep -q 'CELINO_ROUTE_V6' "$CADDYFILE"; then
 fi
 
 cd /opt/cennomo
+COMPOSE='docker compose --env-file .env.production -f docker-compose.production.yml'
 # Older deployments replaced the bind-mounted file inode. Recreate Caddy once
 # when its mounted view lags behind the host file; subsequent edits preserve
 # the inode and only require a zero-downtime reload.
-if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V6' /etc/caddy/Caddyfile; then
-  docker compose -f docker-compose.production.yml up -d --force-recreate caddy
+if ! $COMPOSE exec -T caddy grep -q 'CELINO_ROUTE_V6' /etc/caddy/Caddyfile; then
+  $COMPOSE up -d --force-recreate caddy
 fi
-docker compose -f docker-compose.production.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile
-docker compose -f docker-compose.production.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+$COMPOSE exec -T caddy caddy validate --config /etc/caddy/Caddyfile
+$COMPOSE exec -T caddy caddy reload --config /etc/caddy/Caddyfile
