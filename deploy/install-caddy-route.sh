@@ -25,20 +25,15 @@ celino.167-99-74-236.sslip.io {
 EOF
 fi
 
-# Reuse Ohmium's issued TLS endpoint. This Caddy adapter collapses repeated
-# proxy directives inside route/handle groups, so select one upstream through
-# a URI map and execute a single reverse_proxy directive.
-if ! grep -q 'CELINO_ROUTE_V4' "$CADDYFILE"; then
+# Keep Ohmium isolated and serve Celino from its own TLS virtual host. Earlier
+# dedicated-host checks read a stale bind mount; the host itself is valid.
+if ! grep -q 'CELINO_ROUTE_V5' "$CADDYFILE"; then
   awk '
     /^ohmium\.167-99-74-236\.sslip\.io \{$/ {
       print
-      print "  # CELINO_ROUTE_V4"
+      print "  # CELINO_ROUTE_V5"
       print "  encode zstd gzip"
-      print "  map {path} {celino_backend} {"
-      print "    /celino-api/* celino-core:4320"
-      print "    default ohmium-core:4210"
-      print "  }"
-      print "  reverse_proxy {celino_backend}"
+      print "  reverse_proxy ohmium-core:4210"
       replacing = 1
       next
     }
@@ -54,7 +49,7 @@ cd /opt/cennomo
 # Older deployments replaced the bind-mounted file inode. Recreate Caddy once
 # when its mounted view lags behind the host file; subsequent edits preserve
 # the inode and only require a zero-downtime reload.
-if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V4' /etc/caddy/Caddyfile; then
+if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V5' /etc/caddy/Caddyfile; then
   docker compose -f docker-compose.production.yml up -d --force-recreate caddy
 fi
 docker compose -f docker-compose.production.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile
