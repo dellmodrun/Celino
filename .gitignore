@@ -2,3 +2,6 @@
 Thumbs.db
 .playwright-mcp/
 *.log
+.edge-*/
+*-preview.png
+*-check.png
