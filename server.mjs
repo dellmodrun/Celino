@@ -114,12 +114,13 @@ const server = http.createServer(async (request, response) => {
   if (!withinLimit(request)) return json(response, 429, { error: "rate limit exceeded" });
 
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+  const pathname = url.pathname.startsWith("/celino-api/") ? url.pathname.slice("/celino-api".length) : url.pathname;
   try {
-    if (request.method === "GET" && url.pathname === "/api/health") return json(response, 200, { ok: true, service: "celino-core", version: state.version, time: now(), uptimeSec: Math.floor((Date.now() - startedAt) / 1000) });
-    if (request.method === "GET" && url.pathname === "/api/status") return json(response, 200, { at: now(), requests, capabilities: state.capabilities.filter((item) => item.status === "published").length, sessions: state.sessions.length, contract: null, solanaRegistry: "pending-ca" });
-    if (request.method === "GET" && url.pathname === "/api/capabilities") return json(response, 200, { at: now(), capabilities: state.capabilities.filter((item) => item.status === "published").map(publicCapability) });
+    if (request.method === "GET" && pathname === "/api/health") return json(response, 200, { ok: true, service: "celino-core", version: state.version, time: now(), uptimeSec: Math.floor((Date.now() - startedAt) / 1000) });
+    if (request.method === "GET" && pathname === "/api/status") return json(response, 200, { at: now(), requests, capabilities: state.capabilities.filter((item) => item.status === "published").length, sessions: state.sessions.length, contract: null, solanaRegistry: "pending-ca" });
+    if (request.method === "GET" && pathname === "/api/capabilities") return json(response, 200, { at: now(), capabilities: state.capabilities.filter((item) => item.status === "published").map(publicCapability) });
 
-    if (request.method === "POST" && url.pathname === "/api/auth/challenge") {
+    if (request.method === "POST" && pathname === "/api/auth/challenge") {
       const input = await body(request), address = cleanText(input.address, 44);
       decodeBase58(address);
       const challengeId = id("challenge"), nonce = randomBytes(16).toString("base64url"), issuedAt = now(), expirationTime = new Date(Date.now() + 5 * 60000).toISOString();
@@ -128,7 +129,7 @@ const server = http.createServer(async (request, response) => {
       return json(response, 201, { challengeId, message, expirationTime });
     }
 
-    if (request.method === "POST" && url.pathname === "/api/auth/verify") {
+    if (request.method === "POST" && pathname === "/api/auth/verify") {
       const input = await body(request), challenge = challenges.get(cleanText(input.challengeId, 64));
       if (!challenge || challenge.expiresAt <= Date.now()) return json(response, 401, { error: "challenge expired or unavailable" });
       if (challenge.remoteAddress !== request.socket.remoteAddress) return json(response, 401, { error: "challenge origin changed" });
@@ -141,12 +142,12 @@ const server = http.createServer(async (request, response) => {
       return json(response, 200, { token, wallet: challenge.address, expiresAt });
     }
 
-    if (request.method === "GET" && url.pathname === "/api/session") {
+    if (request.method === "GET" && pathname === "/api/session") {
       const active = session(request);
       return active ? json(response, 200, { authenticated: true, wallet: active.wallet, expiresAt: active.expiresAt }) : json(response, 401, { authenticated: false });
     }
 
-    if (request.method === "POST" && url.pathname === "/api/capabilities") {
+    if (request.method === "POST" && pathname === "/api/capabilities") {
       const active = session(request); if (!active) return json(response, 401, { error: "signed wallet session required" });
       const manifest = validateManifest(await body(request)), canonical = JSON.stringify(manifest), policyDigest = sha256(canonical);
       const existing = state.capabilities.find((item) => item.owner === active.wallet && item.capability === manifest.capability && item.status === "published");
@@ -156,7 +157,7 @@ const server = http.createServer(async (request, response) => {
       return json(response, 201, { capability: publicCapability(capability) });
     }
 
-    const remove = url.pathname.match(/^\/api\/capabilities\/([^/]+)$/);
+    const remove = pathname.match(/^\/api\/capabilities\/([^/]+)$/);
     if (request.method === "DELETE" && remove) {
       const active = session(request); if (!active) return json(response, 401, { error: "signed wallet session required" });
       const capability = state.capabilities.find((item) => item.id === remove[1]);

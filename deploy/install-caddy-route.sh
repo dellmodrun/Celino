@@ -25,56 +25,27 @@ celino.167-99-74-236.sslip.io {
 EOF
 fi
 
-# Reuse Ohmium's already-issued TLS endpoint while the dedicated sslip.io
-# certificate remains unavailable. The explicit uri rule removes /celino-api
-# before the request reaches Celino Core, preserving its /api/* contract.
-if ! grep -q 'CELINO_SHARED_ROUTE' "$CADDYFILE"; then
-  sed -i '/^ohmium\.167-99-74-236\.sslip\.io {$/a\
-  # CELINO_SHARED_ROUTE\
-  handle /celino-api/* {\
-    uri strip_prefix /celino-api\
-    reverse_proxy celino-core:4320\
-  }' "$CADDYFILE"
-fi
-
-# Upgrade the first shared-route form. Using handle_path next to a catch-all
-# handle is not grouped reliably by this Caddy release; two handle directives
-# are grouped and ordered by matcher specificity.
-if grep -q '^  handle_path /celino-api/\* {$' "$CADDYFILE"; then
-  sed -i '/^  handle_path \/celino-api\/\* {$/c\  handle /celino-api/* {\
-    uri strip_prefix /celino-api' "$CADDYFILE"
-fi
-
-# Put both applications in mutually-exclusive handle blocks. A bare fallback
-# reverse_proxy is sorted before handle_path by Caddy, so the old form sent
-# Celino requests to Ohmium. This migration also upgrades the earlier route
-# wrapper without touching any other virtual host.
-if grep -q 'CELINO_ORDERED_ROUTE' "$CADDYFILE"; then
+# Reuse Ohmium's issued TLS endpoint. A route block preserves exact order:
+# Celino's matched prefix is proxied first and Ohmium remains the fallback.
+# Celino Core accepts the prefix, avoiding path-rewrite ordering ambiguity.
+if ! grep -q 'CELINO_ROUTE_V3' "$CADDYFILE"; then
   awk '
-    /# CELINO_ORDERED_ROUTE/ { skip_route_open = 1; next }
-    skip_route_open && /^  route \{$/ { skip_route_open = 0; next }
-    /^  reverse_proxy ohmium-core:4210$/ {
-      print "  handle {"
+    /^ohmium\.167-99-74-236\.sslip\.io \{$/ {
+      print
+      print "  # CELINO_ROUTE_V3"
+      print "  encode zstd gzip"
+      print "  route {"
+      print "    reverse_proxy /celino-api/* celino-core:4320"
       print "    reverse_proxy ohmium-core:4210"
       print "  }"
-      skip_close = 1
+      replacing = 1
       next
     }
-    skip_close && /^  \}$/ { skip_close = 0; next }
+    replacing && /^  header \{$/ { replacing = 0; print; next }
+    replacing { next }
     { print }
   ' "$CADDYFILE" > "${CADDYFILE}.celino-tmp"
   mv "${CADDYFILE}.celino-tmp" "$CADDYFILE"
-fi
-
-# Fresh installs also need the Ohmium fallback wrapped so the two handle
-# directives form one exclusive routing group.
-if ! grep -q 'CELINO_HANDLE_FALLBACK' "$CADDYFILE"; then
-  sed -i '/# CELINO_SHARED_ROUTE/i\  # CELINO_HANDLE_FALLBACK' "$CADDYFILE"
-  if grep -q '^  reverse_proxy ohmium-core:4210$' "$CADDYFILE"; then
-    sed -i '/^  reverse_proxy ohmium-core:4210$/c\  handle {\
-    reverse_proxy ohmium-core:4210\
-  }' "$CADDYFILE"
-  fi
 fi
 
 cd /opt/cennomo

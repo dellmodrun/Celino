@@ -28,6 +28,9 @@ try {
   const health = await call("/api/health");
   assert.equal(health.response.status, 200);
   assert.equal(health.value.service, "celino-core");
+  const edgeHealth = await call("/celino-api/api/health");
+  assert.equal(edgeHealth.response.status, 200);
+  assert.equal(edgeHealth.value.service, "celino-core");
 
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
   const publicDer = publicKey.export({ format: "der", type: "spki" });
