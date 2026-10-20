@@ -34,6 +34,8 @@ The site is deliberately buildless: plain HTML, CSS and JavaScript with a bundle
 - an interactive sealed-execution trace;
 - a deterministic privacy-budget calculator;
 - local SHA-256 Proof Capsule generation using the Web Crypto API;
+- an explicit adversarial threat model and cell lifecycle;
+- capability-surface and revocation specifications;
 - responsive layouts without third-party scripts, cookies or trackers.
 
 Run locally:

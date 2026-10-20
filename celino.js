@@ -6,6 +6,30 @@
 
   $("#year").textContent = new Date().getFullYear();
 
+  const contractStrip = $("#contract");
+  const contractValue = $("#contractValue");
+  const copyContract = $("#copyContract");
+  copyContract.addEventListener("click", async () => {
+    const value = contractStrip.dataset.contract.trim();
+    if (!value || value.toUpperCase() === "TBA") {
+      copyContract.textContent = "CA NOT PUBLISHED";
+      window.setTimeout(() => { copyContract.textContent = "COPY CA"; }, 1400);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      copyContract.textContent = "COPIED";
+    } catch {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(contractValue);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      copyContract.textContent = "SELECTED";
+    }
+    window.setTimeout(() => { copyContract.textContent = "COPY CA"; }, 1400);
+  });
+
   const stage = $("#sealStage");
   const traceState = $("#traceState");
   const traceLog = $("#traceLog");

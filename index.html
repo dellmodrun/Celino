@@ -6,8 +6,8 @@
   <meta name="description" content="Celino turns private knowledge into callable agent capabilities without exposing the underlying data.">
   <meta name="theme-color" content="#000000">
   <title>Celino — Private Capability Liquidity</title>
-  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020b">
-  <link rel="stylesheet" href="celino.css?v=celino-20261020b">
+  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020d">
+  <link rel="stylesheet" href="celino.css?v=celino-20261020d">
   <style>.brand img{width:34px;height:34px}footer img{width:30px;height:30px}</style>
 </head>
 <body>
@@ -27,10 +27,22 @@
       <a href="#build">Build</a>
     </nav>
     <div class="top-actions">
+      <a class="social-icon" href="https://x.com/" target="_blank" rel="noopener" aria-label="X" title="Celino X link pending">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
+      </a>
+      <a class="social-icon" href="https://huggingface.co/" target="_blank" rel="noopener" aria-label="Hugging Face" title="Celino Hugging Face link pending">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="1.4"/><circle cx="16" cy="9" r="1.4"/><path d="M7 14c1.4 1.8 3 2.7 5 2.7s3.6-.9 5-2.7M4 12V8.5C4 4.9 6.9 2 10.5 2h3C17.1 2 20 4.9 20 8.5V12c0 5.2-3.1 9-8 10-4.9-1-8-4.8-8-10Z"/></svg>
+      </a>
       <a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">SOURCE↗</a>
-      <span class="ca" title="Contract address will be published at launch">CA:TBA</span>
     </div>
   </header>
+
+  <div class="contract-strip" id="contract" data-contract="TBA">
+    <span>[ CONTRACT ADDRESS / SOLANA ]</span>
+    <code id="contractValue">TBA</code>
+    <span class="contract-state">AWAITING PUBLICATION</span>
+    <button id="copyContract" type="button">COPY CA</button>
+  </div>
 
   <main id="main">
     <section class="hero" id="top">
@@ -286,9 +298,77 @@ OUTPUT   signed_result + proof_capsule</code></pre>
       </article>
     </section>
 
-    <section class="chapter build" id="build">
+    <section class="chapter threat" id="threat">
       <aside>
         <span>07</span>
+        <p>THREAT MODEL</p>
+      </aside>
+      <article>
+        <div class="section-head">
+          <h2>PRIVACY FAILS<br>ONE QUERY AT A TIME.</h2>
+          <p class="section-note">Celino assumes the caller may be curious, automated, persistent or actively hostile.</p>
+        </div>
+        <div class="threat-grid">
+          <div class="threat-head"><span>VECTOR</span><span>OBSERVATION</span><span>CONTROL</span><span>FAIL STATE</span></div>
+          <div><b>PROMPT INJECTION</b><span>Input asks the cell to ignore owner policy.</span><span>Policy executes outside model context.</span><em>REJECT/0x11</em></div>
+          <div><b>DIFFERENCE ATTACK</b><span>Related queries reveal hidden rows by subtraction.</span><span>Cross-request privacy accounting.</span><em>THROTTLE/0x24</em></div>
+          <div><b>SCHEMA EXPANSION</b><span>Caller requests fields beyond the published card.</span><span>Typed output allowlist.</span><em>MASK/0x31</em></div>
+          <div><b>MODEL MEMORY</b><span>Execution attempts to retain protected context.</span><span>Ephemeral cell; workspace zeroed on return.</span><em>ZERO/0x48</em></div>
+          <div><b>PROOF REPLAY</b><span>A valid capsule is reused for another request.</span><span>Intent digest, nonce and expiry binding.</span><em>VOID/0x52</em></div>
+          <div><b>OWNER REVOCATION</b><span>Capability remains addressable after consent ends.</span><span>Registry epoch and revocation root.</span><em>CLOSE/0x70</em></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="chapter surfaces" id="surfaces">
+      <aside>
+        <span>08</span>
+        <p>CAPABILITY SURFACES</p>
+      </aside>
+      <article>
+        <div class="section-head">
+          <h2>USE THE ANSWER.<br>NEVER ACQUIRE THE ARCHIVE.</h2>
+          <p class="section-note">A source becomes useful only through narrowly declared verbs.</p>
+        </div>
+        <div class="surface-list">
+          <div><span>SEC/01</span><b>Private vulnerability corpus</b><p>Check code against internal findings. Return risk class and proof, never the exploit archive.</p><code>scan(fragment) → verdict</code></div>
+          <div><span>LAW/02</span><b>Restricted policy library</b><p>Test a document against licensed or confidential rules without redistributing their text.</p><code>evaluate(document) → conflicts[]</code></div>
+          <div><span>SCI/03</span><b>Unreleased research</b><p>Answer bounded comparisons across private observations while withholding raw samples.</p><code>compare(hypothesis) → score</code></div>
+          <div><span>OPS/04</span><b>Operating history</b><p>Identify whether an incident resembles an internal failure pattern without exposing logs.</p><code>classify(trace) → pattern_id</code></div>
+          <div><span>ID/05</span><b>Personal context</b><p>Let a personal agent answer preference questions without exporting the user's memory.</p><code>prefer(options[]) → choice</code></div>
+          <div><span>ML/06</span><b>Proprietary evaluator</b><p>Score an external model output using private rubrics while keeping evaluation logic sealed.</p><code>grade(output) → vector</code></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="chapter lifecycle" id="lifecycle">
+      <aside>
+        <span>09</span>
+        <p>CELL LIFECYCLE</p>
+      </aside>
+      <article>
+        <div class="section-head">
+          <h2>A CELL IS A REVOCABLE<br>EXECUTION BOUNDARY.</h2>
+          <p class="section-note">Publication is not permanent access. Every cell moves through explicit network states.</p>
+        </div>
+        <div class="state-machine">
+          <div><small>00</small><b>DRAFT</b><p>Owner declares source, schema and disclosure policy.</p></div>
+          <i>→</i>
+          <div><small>01</small><b>ATTESTED</b><p>Runtime identity and policy digest are registered.</p></div>
+          <i>→</i>
+          <div><small>02</small><b>ACTIVE</b><p>Bounded calls may enter the sealed execution queue.</p></div>
+          <i>→</i>
+          <div><small>03</small><b>GUARDED</b><p>Budget pressure reduces precision and call frequency.</p></div>
+          <i>→</i>
+          <div><small>04</small><b>REVOKED</b><p>New calls fail; prior capsules remain independently verifiable.</p></div>
+        </div>
+        <div class="revocation-line"><span>OWNER CONTROL</span><code>pause(cell)</code><code>rotate(policy)</code><code>revoke(capability)</code><code>destroy(workspace)</code></div>
+      </article>
+    </section>
+
+    <section class="chapter build" id="build">
+      <aside>
+        <span>10</span>
         <p>BUILD SURFACE</p>
       </aside>
       <article>
@@ -318,6 +398,6 @@ OUTPUT   signed_result + proof_capsule</code></pre>
     <p><a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">SOURCE↗</a> / CA:TBA / <span id="year"></span></p>
   </footer>
 
-  <script src="celino.js?v=celino-20261020b"></script>
+  <script src="celino.js?v=celino-20261020d"></script>
 </body>
 </html>
