@@ -1,9 +1,0 @@
-[workspace]
-members = ["programs/*"]
-resolver = "2"
-
-# overflow-checks on in release too: value conservation must never wrap.
-[profile.release]
-overflow-checks = true
-lto = "fat"
-codegen-units = 1
