@@ -156,6 +156,39 @@
     return `fnv1a-${(fallback >>> 0).toString(16).padStart(8, "0")}`;
   }
 
+  async function copyText(value, button, idleLabel) {
+    try {
+      await navigator.clipboard.writeText(value);
+      button.textContent = "COPIED";
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = value;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.opacity = "0";
+      document.body.append(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      button.textContent = "COPIED";
+    }
+    window.setTimeout(() => { button.textContent = idleLabel; }, 1400);
+  }
+
+  function downloadJson(filename, value) {
+    const blob = new Blob([value], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  let currentProof = null;
+
   $("#proofForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const intent = $("#proofIntent").value.trim();
@@ -171,15 +204,97 @@
       digest(JSON.stringify({ schema, expiry, deny: ["source", "credentials", "memory"] }))
     ]);
 
+    const generatedAt = new Date().toISOString();
+    const nonce = crypto.getRandomValues(new Uint32Array(4));
+    currentProof = {
+      protocol: "celino/proof-capsule",
+      version: "1.0.0",
+      intentDigest: `sha256:${intentDigest}`,
+      policyDigest: `sha256:${policyDigest}`,
+      outputSchema: schema.split(",").map((item) => item.trim()).filter(Boolean),
+      expiry,
+      nonce: [...nonce].map((item) => item.toString(16).padStart(8, "0")).join(""),
+      rawDataIncluded: false,
+      generatedAt
+    };
+
     $("#intentHash").textContent = intentDigest;
     $("#policyHash").textContent = policyDigest;
-    $("#proofTime").textContent = new Date().toISOString();
+    $("#proofTime").textContent = generatedAt;
     $("#proofStatus").textContent = "Capsule sealed in this browser. No request or digest was transmitted.";
     $("#capsule").classList.add("sealed");
     $("#capsule .capsule-top b").textContent = "SEALED";
+    $("#copyProof").disabled = false;
+    $("#downloadProof").disabled = false;
     button.disabled = false;
     button.textContent = "RESEAL PROOF CAPSULE";
   });
+
+  $("#copyProof").addEventListener("click", () => {
+    if (!currentProof) return;
+    copyText(JSON.stringify(currentProof, null, 2), $("#copyProof"), "COPY JSON");
+  });
+
+  $("#downloadProof").addEventListener("click", () => {
+    if (!currentProof) return;
+    downloadJson(`celino-proof-${currentProof.nonce.slice(0, 8)}.json`, JSON.stringify(currentProof, null, 2));
+  });
+
+  const manifestForm = $("#manifestForm");
+  const manifestJson = $("#manifestJson");
+  const manifestState = $("#manifestState");
+  const manifestError = $("#manifestError");
+  let currentManifest = "";
+
+  const listValue = (selector) => $(selector).value.split(",").map((item) => item.trim()).filter(Boolean);
+
+  async function compileManifest(event) {
+    event?.preventDefault();
+    manifestError.textContent = "";
+    if (!manifestForm.reportValidity()) {
+      manifestState.textContent = "INVALID";
+      manifestError.textContent = "Correct the highlighted field before compilation.";
+      return;
+    }
+
+    const specification = {
+      protocol: "celino/capability-manifest",
+      version: $("#manifestVersion").value.trim(),
+      capability: $("#manifestName").value.trim(),
+      accepts: listValue("#manifestAccepts"),
+      returns: listValue("#manifestReturns"),
+      disclosure: { deny: listValue("#manifestDeny") },
+      execution: {
+        source: "owner-sealed",
+        networkAccess: false,
+        persistentMemory: false,
+        ttlSeconds: Number($("#manifestTtl").value)
+      },
+      privacy: { window: "24h", compositeLimit: Number($("#manifestLimit").value) },
+      settlement: { condition: "valid_output && valid_proof", status: "pending-contract" }
+    };
+
+    if (!specification.accepts.length || !specification.returns.length || !specification.disclosure.deny.length) {
+      manifestState.textContent = "INVALID";
+      manifestError.textContent = "Accepts, returns and denied fields each require at least one value.";
+      return;
+    }
+
+    const canonical = JSON.stringify(specification);
+    const policyDigest = await digest(canonical);
+    const compiled = { ...specification, policyDigest: `sha256:${policyDigest}` };
+    currentManifest = JSON.stringify(compiled, null, 2);
+    manifestJson.textContent = currentManifest;
+    manifestState.textContent = "VALID / SHA-256";
+  }
+
+  manifestForm.addEventListener("submit", compileManifest);
+  $("#copyManifest").addEventListener("click", () => copyText(currentManifest, $("#copyManifest"), "COPY JSON"));
+  $("#downloadManifest").addEventListener("click", () => {
+    if (!currentManifest) return;
+    downloadJson(`${$("#manifestName").value.trim() || "celino-capability"}.json`, currentManifest);
+  });
+  compileManifest();
 
   const sections = $$('section[id]');
   const links = $$('.topbar nav a');

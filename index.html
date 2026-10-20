@@ -6,8 +6,8 @@
   <meta name="description" content="Celino turns private knowledge into callable agent capabilities without exposing the underlying data.">
   <meta name="theme-color" content="#000000">
   <title>Celino — Private Capability Liquidity</title>
-  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020d">
-  <link rel="stylesheet" href="celino.css?v=celino-20261020d">
+  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020f">
+  <link rel="stylesheet" href="celino.css?v=celino-20261020f">
   <style>.brand img{width:34px;height:34px}footer img{width:30px;height:30px}</style>
 </head>
 <body>
@@ -31,9 +31,8 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
       </a>
       <a class="social-icon" href="https://huggingface.co/" target="_blank" rel="noopener" aria-label="Hugging Face" title="Celino Hugging Face link pending">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="1.4"/><circle cx="16" cy="9" r="1.4"/><path d="M7 14c1.4 1.8 3 2.7 5 2.7s3.6-.9 5-2.7M4 12V8.5C4 4.9 6.9 2 10.5 2h3C17.1 2 20 4.9 20 8.5V12c0 5.2-3.1 9-8 10-4.9-1-8-4.8-8-10Z"/></svg>
+        <span class="hf-mark" aria-hidden="true"></span>
       </a>
-      <a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">SOURCE↗</a>
     </div>
   </header>
 
@@ -254,6 +253,10 @@ OUTPUT   signed_result + proof_capsule</code></pre>
               <div><dt>GENERATED</dt><dd id="proofTime">ON REQUEST</dd></div>
             </dl>
             <p id="proofStatus">Fill the envelope and seal it locally.</p>
+            <div class="capsule-actions">
+              <button id="copyProof" type="button" disabled>COPY JSON</button>
+              <button id="downloadProof" type="button" disabled>DOWNLOAD</button>
+            </div>
           </div>
         </div>
       </article>
@@ -373,19 +376,60 @@ OUTPUT   signed_result + proof_capsule</code></pre>
       </aside>
       <article>
         <div class="section-head">
-          <h2>A CAPABILITY IS A CONTRACT<br>WITH A SMALL SURFACE.</h2>
-          <p class="section-note">Owners publish schemas and policies, not source material.</p>
+          <h2>BUILD A CAPABILITY.<br>EXPORT THE CONTRACT.</h2>
+          <p class="section-note">This workbench validates and compiles a portable capability manifest entirely in your browser. Private source material is never requested.</p>
         </div>
-        <pre class="protocol-code"><code><span>capability</span> "private-code-risk" {
-  accepts     = ["text/code", "sha256"]
-  returns     = ["verdict", "category", "confidence", "proof"]
-  source      = sealed("vault://owner/security-corpus")
-  disclosure  = deny(["rules", "samples", "memory", "credentials"])
-  budget      = compose(window: "24h", limit: 0.72)
-  settlement  = after(valid_output && valid_proof)
-}</code></pre>
+        <div class="manifest-studio">
+          <form id="manifestForm" novalidate>
+            <div class="studio-title"><span>CAPABILITY MANIFEST / EDITOR</span><b>LOCAL ONLY</b></div>
+            <div class="manifest-grid">
+              <label>CAPABILITY NAME<input id="manifestName" required pattern="[a-z0-9][a-z0-9-]{2,63}" value="private-code-risk" autocomplete="off"></label>
+              <label>VERSION<input id="manifestVersion" required pattern="[0-9]+\.[0-9]+\.[0-9]+" value="1.0.0" autocomplete="off"></label>
+              <label class="wide">ACCEPTS / COMMA SEPARATED<input id="manifestAccepts" required value="text/code, sha256" autocomplete="off"></label>
+              <label class="wide">RETURNS / COMMA SEPARATED<input id="manifestReturns" required value="verdict, category, confidence, proof" autocomplete="off"></label>
+              <label class="wide">DENIED FIELDS / COMMA SEPARATED<input id="manifestDeny" required value="source, rules, samples, memory, credentials" autocomplete="off"></label>
+              <label>CALL TTL / SECONDS<input id="manifestTtl" type="number" min="1" max="86400" value="120"></label>
+              <label>24H PRIVACY LIMIT<input id="manifestLimit" type="number" min="0.01" max="1" step="0.01" value="0.72"></label>
+            </div>
+            <button type="submit">VALIDATE + COMPILE</button>
+            <p id="manifestError" class="manifest-error" aria-live="polite"></p>
+          </form>
+          <div class="manifest-output">
+            <div class="studio-title"><span>COMPILED MANIFEST / JSON</span><b id="manifestState">READY</b></div>
+            <pre id="manifestJson" aria-live="polite"></pre>
+            <div class="output-actions">
+              <button id="copyManifest" type="button">COPY JSON</button>
+              <button id="downloadManifest" type="button">DOWNLOAD .JSON</button>
+            </div>
+          </div>
+        </div>
+        <div class="integration-grid">
+          <div>
+            <span>01 / DEFINE</span>
+            <b>Declare the narrowest useful surface</b>
+            <p>List accepted inputs, permitted output fields, expiry and cumulative disclosure limits. Source contents never belong in the manifest.</p>
+          </div>
+          <div>
+            <span>02 / VERIFY</span>
+            <b>Pin policy identity</b>
+            <p>The compiler creates a deterministic SHA-256 digest. Owners can compare this digest before activation or after a policy rotation.</p>
+          </div>
+          <div>
+            <span>03 / REGISTER</span>
+            <b>Publish after contract activation</b>
+            <p>Solana registry submission remains unavailable until the official contract address is published. Exported manifests are ready for that interface.</p>
+          </div>
+        </div>
+        <div class="network-readiness" aria-label="Celino component readiness">
+          <div class="readiness-head"><span>COMPONENT</span><span>STATE</span><span>AVAILABLE FUNCTION</span></div>
+          <div><b>LOCAL COMPILER</b><em class="online">OPERATIONAL</em><span>Validate, hash, copy and download a capability manifest</span></div>
+          <div><b>PRIVACY ACCOUNTANT</b><em class="online">OPERATIONAL</em><span>Calculate deterministic composite exposure in this browser</span></div>
+          <div><b>PROOF CAPSULE</b><em class="online">OPERATIONAL</em><span>Generate SHA-256 bound intent and policy records locally</span></div>
+          <div><b>SOLANA REGISTRY</b><em>PENDING CA</em><span>On-chain registration disabled until the official program is published</span></div>
+          <div><b>SETTLEMENT ROUTER</b><em>PENDING CA</em><span>No fee routing or token transaction is presented as active</span></div>
+        </div>
         <div class="build-links">
-          <a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">[ READ SOURCE ]</a>
+          <a href="https://huggingface.co/" target="_blank" rel="noopener">[ HUGGING FACE ]</a>
           <a href="#top">[ RETURN TO ROOT ]</a>
         </div>
       </article>
@@ -395,9 +439,9 @@ OUTPUT   signed_result + proof_capsule</code></pre>
   <footer>
     <div><img src="celino-logo.png" alt="" width="30" height="30"><b>CELINO</b></div>
     <p>Private knowledge becomes callable. The underlying data remains sealed.</p>
-    <p><a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">SOURCE↗</a> / CA:TBA / <span id="year"></span></p>
+    <p><a href="https://huggingface.co/" target="_blank" rel="noopener">HUGGING FACE↗</a> / CA:TBA / <span id="year"></span></p>
   </footer>
 
-  <script src="celino.js?v=celino-20261020d"></script>
+  <script src="celino.js?v=celino-20261020f"></script>
 </body>
 </html>
