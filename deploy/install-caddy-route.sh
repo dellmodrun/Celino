@@ -36,12 +36,36 @@ if ! grep -q 'CELINO_SHARED_ROUTE' "$CADDYFILE"; then
   }' "$CADDYFILE"
 fi
 
-# Preserve matcher order. Without an explicit route block Caddy may sort the
-# catch-all Ohmium reverse_proxy ahead of handle_path.
-if ! grep -q 'CELINO_ORDERED_ROUTE' "$CADDYFILE"; then
-  sed -i '/# CELINO_SHARED_ROUTE/i\  # CELINO_ORDERED_ROUTE\
-  route {' "$CADDYFILE"
-  sed -i '/reverse_proxy ohmium-core:4210/a\  }' "$CADDYFILE"
+# Put both applications in mutually-exclusive handle blocks. A bare fallback
+# reverse_proxy is sorted before handle_path by Caddy, so the old form sent
+# Celino requests to Ohmium. This migration also upgrades the earlier route
+# wrapper without touching any other virtual host.
+if grep -q 'CELINO_ORDERED_ROUTE' "$CADDYFILE"; then
+  awk '
+    /# CELINO_ORDERED_ROUTE/ { skip_route_open = 1; next }
+    skip_route_open && /^  route \{$/ { skip_route_open = 0; next }
+    /^  reverse_proxy ohmium-core:4210$/ {
+      print "  handle {"
+      print "    reverse_proxy ohmium-core:4210"
+      print "  }"
+      skip_close = 1
+      next
+    }
+    skip_close && /^  \}$/ { skip_close = 0; next }
+    { print }
+  ' "$CADDYFILE" > "${CADDYFILE}.celino-tmp"
+  mv "${CADDYFILE}.celino-tmp" "$CADDYFILE"
+fi
+
+# Fresh installs also need the Ohmium fallback wrapped so the two handle
+# directives form one exclusive routing group.
+if ! grep -q 'CELINO_HANDLE_FALLBACK' "$CADDYFILE"; then
+  sed -i '/# CELINO_SHARED_ROUTE/i\  # CELINO_HANDLE_FALLBACK' "$CADDYFILE"
+  if grep -q '^  reverse_proxy ohmium-core:4210$' "$CADDYFILE"; then
+    sed -i '/^  reverse_proxy ohmium-core:4210$/c\  handle {\
+    reverse_proxy ohmium-core:4210\
+  }' "$CADDYFILE"
+  fi
 fi
 
 cd /opt/cennomo
