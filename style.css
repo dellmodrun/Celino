@@ -1,0 +1,121 @@
+body { background-color: #000000; color: #aaaaaa; font-family: "IBM VGA 8x16"; font-size: 16px; line-height: 16px; word-break: break-word; }
+
+@font-face { font-family: "IBM VGA 8x16"; src: url("Web437_IBM_VGA_8x16.woff") format('woff'); }
+
+p + ul { margin-top: -16px; padding-left: 24px; padding-right: 56px; }
+
+img { color: #aa5500; padding-left: 24px; padding-right: 56px; }
+
+p img { padding-left: 0px; }
+
+img:active { color: #ffff55; }
+
+img:focus { color: #ffff55; outline: none; }
+
+img:hover { color: #ffff55; }
+
+img:visited { color: #aa5500; }
+
+img::selection { color: #000000; background-color: #aa5500; }
+
+h1 span::selection { color: #5555ff; background: #aa5500; }
+
+p::selection { color: #000000; background-color: #aaaaaa; }
+
+a::selection { color: #000000; background-color: #00aa00; }
+
+a:link { color: #00aa00; }
+
+a:visited { color: #00aa00; }
+
+a:active { color: #ffff55; }
+
+a:focus { color: #ffff55; outline: none; }
+
+a:hover { color: #ffff55; }
+
+ul::selection { color: #000000; background-color: #aa5500; }
+
+li::selection { color: #000000; background-color: #aa00aa; }
+
+strong::selection { color: #555555; background-color: #aa0000; }
+
+i::selection { color: #555555; background-color: #0000aa; }
+
+em::selection { color: #555555; background-color: #0000aa; }
+
+a { color: #00aa00; text-decoration: none; outline: none; }
+
+h1 { color: #ffff55; font-size: 16px; text-align: center; padding-top: 8px;}
+
+h1 span { background-color: #0000aa; }
+
+ul { padding: 32px; padding-top: 0px; padding-bottom: 0px; color: #aa5500; }
+
+ul > li { margin-right: 32px;}
+
+li { color: #aa00aa; list-style: none; padding-left: 32px; padding-right: 56px; }
+
+li:before { content: "\00a0\00a0"; }
+
+ul > li:before { content: "*\00a0"; position: absolute; left: 48px; }
+
+strong { font-weight: normal; color: #ff5555; }
+
+i { font-style: normal; color: #5555ff; }
+
+em { font-style: normal; color: #5555ff; }
+
+b { font-style: normal; font-weight: normal; color: #aa0000; }
+
+h4 { font-weight: normal }
+
+h4:before { content:"\00a0"; }
+
+sub {vertical-align: baseline; font-size: 16px; color: #555555; }
+
+sub:before { content:"["; }
+
+sub:after { content:"]"; }
+
+sub::selection { color: #555555; background-color: #000000; } 
+
+table { color: #55ffff; padding-left: 32px; }
+
+table::selection { color: #555555; background-color: #00aaaa; }
+
+th { color: #aa5500; }
+
+td { color: #ffffff; }
+
+th::selection { color: #000000; background-color: #aa5500; }
+
+td::selection { color: #555555; background-color: #aaaaaa; }
+
+tt { font-family: "IBM VGA 8x16"; color: #ff55ff; }
+
+tt::selection { color: #555555; background-color: #aa00aa; }
+
+p { padding-left: 24px; padding-right: 56px; } 
+
+h2 { font-size: 16px; font-weight: normal; }
+
+h2::selection { color: #000000; background-color: #aaaaaa; }
+
+h3 { font-size: 16px; font-weight: normal; padding-left: 16px; padding-right: 56px; }
+
+h3::selection { color: #000000; background-color: #aaaaaa; }
+
+h4 { font-size: 16px; font-weight: normal; padding-left: 24px; padding-right: 56px; }
+
+h4::selection { color: #000000; background-color: #aaaaaa; }
+
+h5 { font-size: 16px; font-weight: normal; padding-left: 48px; padding-right: 56px; }
+
+h5::selection { color: #000000; background-color: #aaaaaa; }
+
+del { text-decoration: none; }
+
+del:before { content:"[DEL:\00a0" }
+
+del:after { content:"\00a0:DEL]" }
