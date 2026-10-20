@@ -1,0 +1,24 @@
+services:
+  celino-core:
+    build: .
+    container_name: celino-core
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4320
+      CELINO_DATA_DIR: /app/data
+    volumes:
+      - ./data:/app/data
+    networks:
+      - cennomo_default
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4320/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  cennomo_default:
+    external: true

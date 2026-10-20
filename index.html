@@ -6,8 +6,8 @@
   <meta name="description" content="Celino turns private knowledge into callable agent capabilities without exposing the underlying data.">
   <meta name="theme-color" content="#000000">
   <title>Celino — Private Capability Liquidity</title>
-  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020f">
-  <link rel="stylesheet" href="celino.css?v=celino-20261020f">
+  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020g">
+  <link rel="stylesheet" href="celino.css?v=celino-20261020g">
   <style>.brand img{width:34px;height:34px}footer img{width:30px;height:30px}</style>
 </head>
 <body>
@@ -33,8 +33,32 @@
       <a class="social-icon" href="https://huggingface.co/" target="_blank" rel="noopener" aria-label="Hugging Face" title="Celino Hugging Face link pending">
         <span class="hf-mark" aria-hidden="true"></span>
       </a>
+      <button class="wallet-trigger" id="walletTrigger" type="button">CONNECT WALLET</button>
     </div>
   </header>
+
+  <dialog class="wallet-dialog" id="walletDialog" aria-labelledby="walletTitle">
+    <div class="wallet-dialog-head">
+      <div><small>SOLANA / WALLET STANDARD</small><h2 id="walletTitle">Connect wallet</h2></div>
+      <button id="walletClose" type="button" aria-label="Close wallet selector">ESC</button>
+    </div>
+    <div class="wallet-session" id="walletSession" hidden>
+      <span>CONNECTED ACCOUNT</span>
+      <strong id="walletAddress"></strong>
+      <small id="walletAuthState">Wallet connected. Sign the login message to authenticate with Celino Core.</small>
+      <div><button id="walletAuthenticate" type="button">SIGN IN</button><button id="walletDisconnect" type="button">DISCONNECT</button></div>
+    </div>
+    <div class="wallet-picker" id="walletPicker">
+      <p>Select any compatible Solana wallet detected in this browser. Celino never receives your private key.</p>
+      <div class="wallet-list" id="walletList" aria-live="polite"></div>
+      <div class="wallet-empty" id="walletEmpty" hidden>
+        <b>NO COMPATIBLE WALLET DETECTED</b>
+        <span>Install a Wallet Standard compatible Solana wallet, then refresh detection.</span>
+      </div>
+      <button class="wallet-refresh" id="walletRefresh" type="button">REFRESH DETECTION</button>
+    </div>
+    <p class="wallet-error" id="walletError" aria-live="assertive"></p>
+  </dialog>
 
   <div class="contract-strip" id="contract" data-contract="TBA">
     <span>[ CONTRACT ADDRESS / SOLANA ]</span>
@@ -400,6 +424,7 @@ OUTPUT   signed_result + proof_capsule</code></pre>
             <div class="output-actions">
               <button id="copyManifest" type="button">COPY JSON</button>
               <button id="downloadManifest" type="button">DOWNLOAD .JSON</button>
+              <button id="publishManifest" type="button">PUBLISH TO CORE</button>
             </div>
           </div>
         </div>
@@ -425,8 +450,13 @@ OUTPUT   signed_result + proof_capsule</code></pre>
           <div><b>LOCAL COMPILER</b><em class="online">OPERATIONAL</em><span>Validate, hash, copy and download a capability manifest</span></div>
           <div><b>PRIVACY ACCOUNTANT</b><em class="online">OPERATIONAL</em><span>Calculate deterministic composite exposure in this browser</span></div>
           <div><b>PROOF CAPSULE</b><em class="online">OPERATIONAL</em><span>Generate SHA-256 bound intent and policy records locally</span></div>
+          <div><b>CELINO CORE</b><em id="coreState">CONNECTING</em><span id="coreDetail">Checking the live registry endpoint</span></div>
           <div><b>SOLANA REGISTRY</b><em>PENDING CA</em><span>On-chain registration disabled until the official program is published</span></div>
           <div><b>SETTLEMENT ROUTER</b><em>PENDING CA</em><span>No fee routing or token transaction is presented as active</span></div>
+        </div>
+        <div class="registry-panel">
+          <div class="studio-title"><span>PUBLIC CAPABILITY REGISTRY</span><b id="registryCount">0 RECORDS</b></div>
+          <div id="registryList" class="registry-list"><p>Connecting to Celino Core…</p></div>
         </div>
         <div class="build-links">
           <a href="https://huggingface.co/" target="_blank" rel="noopener">[ HUGGING FACE ]</a>
@@ -442,6 +472,6 @@ OUTPUT   signed_result + proof_capsule</code></pre>
     <p><a href="https://huggingface.co/" target="_blank" rel="noopener">HUGGING FACE↗</a> / CA:TBA / <span id="year"></span></p>
   </footer>
 
-  <script src="celino.js?v=celino-20261020f"></script>
+  <script src="celino.js?v=celino-20261020g"></script>
 </body>
 </html>

@@ -30,6 +30,173 @@
     window.setTimeout(() => { copyContract.textContent = "COPY CA"; }, 1400);
   });
 
+  const API_ORIGIN = "https://celino.167-99-74-236.sslip.io";
+  const walletTrigger = $("#walletTrigger");
+  const walletDialog = $("#walletDialog");
+  const walletList = $("#walletList");
+  const walletEmpty = $("#walletEmpty");
+  const walletPicker = $("#walletPicker");
+  const walletSession = $("#walletSession");
+  const walletAddress = $("#walletAddress");
+  const walletAuthState = $("#walletAuthState");
+  const walletError = $("#walletError");
+  const discoveredWallets = new Map();
+  let activeWallet = null;
+  let activeAccount = null;
+  let sessionToken = sessionStorage.getItem("celino.session") || "";
+
+  const shortAddress = (address) => `${address.slice(0, 4)}…${address.slice(-4)}`;
+  const api = async (path, options = {}) => {
+    const headers = { "content-type": "application/json", ...(options.headers || {}) };
+    if (sessionToken) headers.authorization = `Bearer ${sessionToken}`;
+    const response = await fetch(`${API_ORIGIN}${path}`, { ...options, headers });
+    const result = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    return result;
+  };
+
+  function registerWallets(...wallets) {
+    wallets.flat().forEach((wallet) => {
+      if (!wallet?.name || !wallet?.features?.["standard:connect"]) return;
+      discoveredWallets.set(wallet.name, { kind: "standard", wallet });
+    });
+    renderWallets();
+    return () => wallets.forEach((wallet) => discoveredWallets.delete(wallet.name));
+  }
+
+  const walletRegistry = Object.freeze({ register: registerWallets });
+  window.addEventListener("wallet-standard:register-wallet", (event) => {
+    if (typeof event.detail === "function") event.detail(walletRegistry);
+  });
+  window.dispatchEvent(new CustomEvent("wallet-standard:app-ready", { detail: walletRegistry }));
+
+  function discoverLegacyWallets() {
+    const candidates = [
+      ["Phantom", window.phantom?.solana],
+      ["Solflare", window.solflare],
+      ["Backpack", window.backpack]
+    ];
+    candidates.forEach(([name, provider]) => {
+      if (provider?.connect && !discoveredWallets.has(name)) discoveredWallets.set(name, { kind: "legacy", wallet: provider, name });
+    });
+  }
+
+  function renderWallets() {
+    if (!walletList) return;
+    discoverLegacyWallets();
+    walletList.replaceChildren();
+    [...discoveredWallets.values()].sort((a, b) => (a.wallet.name || a.name).localeCompare(b.wallet.name || b.name)).forEach((entry) => {
+      const name = entry.wallet.name || entry.name;
+      const button = document.createElement("button");
+      button.className = "wallet-option";
+      button.type = "button";
+      const icon = document.createElement("i"), label = document.createElement("span"), standard = document.createElement("small");
+      icon.textContent = name.slice(0, 1).toUpperCase();
+      label.textContent = name;
+      standard.textContent = entry.kind === "standard" ? "WALLET STANDARD" : "COMPATIBLE";
+      button.append(icon, label, standard);
+      button.addEventListener("click", () => connectWallet(entry));
+      walletList.append(button);
+    });
+    walletEmpty.hidden = discoveredWallets.size > 0;
+  }
+
+  function showConnected(address, authenticated = false) {
+    walletPicker.hidden = true;
+    walletSession.hidden = false;
+    walletAddress.textContent = address;
+    walletTrigger.textContent = authenticated ? `${shortAddress(address)} / AUTH` : shortAddress(address);
+    walletTrigger.classList.toggle("connected", !authenticated);
+    walletTrigger.classList.toggle("authenticated", authenticated);
+    walletAuthState.textContent = authenticated
+      ? "Signed session active. Capability publication and owner actions are authorized."
+      : "Wallet connected. Sign the login message to authenticate with Celino Core.";
+    $("#walletAuthenticate").hidden = authenticated;
+  }
+
+  async function connectWallet(entry) {
+    walletError.textContent = "";
+    try {
+      if (entry.kind === "standard") {
+        const feature = entry.wallet.features["standard:connect"];
+        const result = await feature.connect();
+        activeAccount = result?.accounts?.[0] || entry.wallet.accounts?.[0];
+        if (!activeAccount?.address) throw new Error("wallet returned no Solana account");
+      } else {
+        const result = await entry.wallet.connect();
+        const address = result?.publicKey?.toString() || entry.wallet.publicKey?.toString();
+        if (!address) throw new Error("wallet returned no Solana account");
+        activeAccount = { address };
+      }
+      activeWallet = entry;
+      sessionToken = "";
+      sessionStorage.removeItem("celino.session");
+      showConnected(activeAccount.address, false);
+    } catch (error) { walletError.textContent = error.message || "Wallet connection failed."; }
+  }
+
+  const bytesToBase64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)));
+  async function signMessage(message) {
+    const bytes = new TextEncoder().encode(message);
+    if (!activeWallet) throw new Error("Reconnect the wallet before signing in");
+    if (activeWallet.kind === "standard") {
+      const feature = activeWallet.wallet.features["solana:signMessage"];
+      if (!feature?.signMessage) throw new Error("This wallet does not support message signing");
+      const result = await feature.signMessage({ account: activeAccount, message: bytes });
+      const output = Array.isArray(result) ? result[0] : result;
+      return bytesToBase64(output.signature);
+    }
+    if (!activeWallet.wallet.signMessage) throw new Error("This wallet does not support message signing");
+    const result = await activeWallet.wallet.signMessage(bytes, "utf8");
+    return bytesToBase64(result.signature || result);
+  }
+
+  async function authenticateWallet() {
+    walletError.textContent = "";
+    const button = $("#walletAuthenticate");
+    try {
+      button.disabled = true;
+      button.textContent = "REQUESTING CHALLENGE";
+      const challenge = await api("/api/auth/challenge", { method: "POST", body: JSON.stringify({ address: activeAccount.address }) });
+      button.textContent = "AWAITING SIGNATURE";
+      const signature = await signMessage(challenge.message);
+      const verified = await api("/api/auth/verify", { method: "POST", body: JSON.stringify({ challengeId: challenge.challengeId, signature }) });
+      sessionToken = verified.token;
+      sessionStorage.setItem("celino.session", sessionToken);
+      showConnected(verified.wallet, true);
+    } catch (error) { walletError.textContent = error.message || "Wallet authentication failed."; }
+    finally { button.disabled = false; button.textContent = "SIGN IN"; }
+  }
+
+  async function disconnectWallet() {
+    try {
+      if (activeWallet?.kind === "standard") await activeWallet.wallet.features["standard:disconnect"]?.disconnect?.();
+      else await activeWallet?.wallet?.disconnect?.();
+    } catch {}
+    activeWallet = null; activeAccount = null; sessionToken = "";
+    sessionStorage.removeItem("celino.session");
+    walletPicker.hidden = false; walletSession.hidden = true;
+    walletTrigger.textContent = "CONNECT WALLET";
+    walletTrigger.classList.remove("connected", "authenticated");
+    renderWallets();
+  }
+
+  walletTrigger.addEventListener("click", () => { walletError.textContent = ""; renderWallets(); walletDialog.showModal(); });
+  $("#walletClose").addEventListener("click", () => walletDialog.close());
+  $("#walletRefresh").addEventListener("click", renderWallets);
+  $("#walletAuthenticate").addEventListener("click", authenticateWallet);
+  $("#walletDisconnect").addEventListener("click", disconnectWallet);
+  walletDialog.addEventListener("click", (event) => { if (event.target === walletDialog) walletDialog.close(); });
+
+  async function restoreSession() {
+    if (!sessionToken) return;
+    try {
+      const current = await api("/api/session");
+      activeAccount = { address: current.wallet };
+      showConnected(current.wallet, true);
+    } catch { sessionToken = ""; sessionStorage.removeItem("celino.session"); }
+  }
+
   const stage = $("#sealStage");
   const traceState = $("#traceState");
   const traceLog = $("#traceLog");
@@ -294,7 +461,71 @@
     if (!currentManifest) return;
     downloadJson(`${$("#manifestName").value.trim() || "celino-capability"}.json`, currentManifest);
   });
+  $("#publishManifest").addEventListener("click", async () => {
+    const button = $("#publishManifest");
+    if (!currentManifest) await compileManifest();
+    if (!sessionToken) {
+      walletError.textContent = activeAccount ? "Sign in before publishing a capability." : "Connect and sign in before publishing a capability.";
+      renderWallets();
+      walletDialog.showModal();
+      return;
+    }
+    try {
+      button.disabled = true;
+      button.textContent = "PUBLISHING";
+      await api("/api/capabilities", { method: "POST", body: currentManifest });
+      button.textContent = "PUBLISHED";
+      await loadRegistry();
+    } catch (error) {
+      button.textContent = "PUBLISH FAILED";
+      manifestError.textContent = error.message;
+    } finally {
+      button.disabled = false;
+      window.setTimeout(() => { button.textContent = "PUBLISH TO CORE"; }, 1600);
+    }
+  });
   compileManifest();
+
+  function appendRegistryRecord(capability) {
+    const row = document.createElement("div");
+    row.className = "registry-record";
+    const name = document.createElement("b"), digest = document.createElement("code"), owner = document.createElement("span"), time = document.createElement("time");
+    name.textContent = `${capability.capability}@${capability.version}`;
+    digest.textContent = capability.policyDigest;
+    owner.textContent = capability.owner;
+    time.textContent = new Date(capability.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+    time.dateTime = capability.createdAt;
+    row.append(name, digest, owner, time);
+    $("#registryList").append(row);
+  }
+
+  async function loadRegistry() {
+    const coreState = $("#coreState"), coreDetail = $("#coreDetail");
+    try {
+      const [health, registry] = await Promise.all([api("/api/health"), api("/api/capabilities")]);
+      coreState.textContent = "OPERATIONAL";
+      coreState.className = "online";
+      coreDetail.textContent = `${health.service} v${health.version} / live authenticated registry`;
+      $("#registryCount").textContent = `${registry.capabilities.length} ${registry.capabilities.length === 1 ? "RECORD" : "RECORDS"}`;
+      $("#registryList").replaceChildren();
+      if (!registry.capabilities.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "No owner-published capabilities yet. Connect a wallet, compile a manifest and publish the first real record.";
+        $("#registryList").append(empty);
+      } else registry.capabilities.forEach(appendRegistryRecord);
+    } catch (error) {
+      coreState.textContent = "UNAVAILABLE";
+      coreState.className = "offline";
+      coreDetail.textContent = "Celino Core could not be reached; local instruments remain operational";
+      $("#registryList").replaceChildren();
+      const message = document.createElement("p");
+      message.textContent = `Registry unavailable: ${error.message}`;
+      $("#registryList").append(message);
+    }
+  }
+
+  restoreSession();
+  loadRegistry();
 
   const sections = $$('section[id]');
   const links = $$('.topbar nav a');

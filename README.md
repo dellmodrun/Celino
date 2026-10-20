@@ -2,7 +2,7 @@
 
 **Private data. Public capability.**
 
-Celino is a protocol concept for turning private knowledge into callable agent capabilities without exposing the source data. A caller sends a bounded intent to a sealed cell. The cell executes beside the owner's data, filters the result through owner policy, and returns a minimal answer with a proof capsule.
+Celino turns private knowledge into callable agent capabilities without exposing the source data. A caller sends a bounded intent to a sealed cell. The cell executes beside the owner's data, filters the result through owner policy, and returns a minimal answer with a proof capsule.
 
 ## Core model
 
@@ -37,6 +37,8 @@ The site is deliberately buildless: plain HTML, CSS and JavaScript with a bundle
 - an explicit adversarial threat model and cell lifecycle;
 - capability-surface and revocation specifications;
 - responsive layouts without third-party scripts, cookies or trackers.
+- Wallet Standard discovery with explicit message-signing authentication;
+- a live capability Manifest compiler and owner-published Registry.
 
 Run locally:
 
@@ -45,6 +47,27 @@ python -m http.server 4210
 ```
 
 Then open `http://127.0.0.1:4210/`.
+
+## Core API
+
+The production API is a separate, dependency-free Node service. It provides:
+
+- `POST /api/auth/challenge` and `POST /api/auth/verify` for signed Solana wallet sessions;
+- `GET /api/session` for session verification;
+- `GET|POST /api/capabilities` for public discovery and authenticated publication;
+- `DELETE /api/capabilities/:id` for owner-authorized revocation;
+- `GET /api/health` and `GET /api/status` for real service state.
+
+Wallet signatures are verified as Ed25519 signatures against the submitted Solana public key. Private keys never enter Celino. Registry records are persisted atomically, sessions expire after 24 hours, login challenges expire after five minutes, CORS is allowlisted, and request bodies and rates are bounded.
+
+Run the API locally:
+
+```bash
+npm test
+npm start
+```
+
+Production uses the included Docker Compose service, a persistent data mount and the shared Caddy edge.
 
 ## Repository
 
@@ -60,7 +83,7 @@ Celino/
 
 ## Status
 
-Celino currently publishes the protocol thesis, interface specification and browser-side reference instruments. Contract address and production network endpoints remain `TBA` until officially released.
+The browser instruments, signed wallet authentication and off-chain capability Registry are implemented. Contract address, token settlement and on-chain Solana Registry remain `TBA` until officially released; the interface does not present them as active.
 
 ## Links
 
