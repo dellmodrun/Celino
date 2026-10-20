@@ -10,15 +10,19 @@
   const traceState = $("#traceState");
   const traceLog = $("#traceLog");
   const runTrace = $("#runTrace");
+  const policyRows = $$(".policy-pane li");
+  const registerValues = $$("#registers b");
   let traceTimer = null;
 
   const traceSteps = [
-    ["01", "envelope", "request encrypted + expiry attached"],
-    ["02", "broker", "unnecessary context removed"],
-    ["03", "guardian", "owner policy compiled"],
-    ["04", "vault", "sealed capability executed"],
-    ["05", "filter", "raw fields withheld"],
-    ["06", "proof", "capsule committed locally"]
+    ["01", "load", "intent envelope mapped @ 0x0010"],
+    ["02", "cmp", "scope intersects owner.allow"],
+    ["03", "mount", "private source opened read-only"],
+    ["04", "exec", "capability returned bounded result"],
+    ["05", "mask", "raw fields withheld / disclosure=0"],
+    ["06", "hash", "output digest committed"],
+    ["07", "zero", "volatile workspace erased"],
+    ["08", "ret", "attestation complete / exit=0"]
   ];
 
   runTrace.addEventListener("click", () => {
@@ -28,24 +32,37 @@
     runTrace.disabled = true;
     runTrace.textContent = "TRACE IN PROGRESS";
     traceLog.innerHTML = "";
+    policyRows.forEach((row) => row.classList.remove("active"));
+    registerValues[0].textContent = "0x0000";
+    registerValues[5].textContent = "—";
     let cursor = 0;
     const append = () => {
       const [id, phase, message] = traceSteps[cursor];
       const item = document.createElement("li");
       item.innerHTML = `<time>${id}</time><span>${phase}</span><b>${message}</b>`;
       traceLog.append(item);
+      policyRows.forEach((row) => row.classList.remove("active"));
+      policyRows[Math.min(cursor, policyRows.length - 1)]?.classList.add("active");
+      registerValues[0].textContent = `0x${String((cursor + 1) * 16).padStart(4, "0")}`;
       cursor += 1;
       if (cursor === traceSteps.length) {
         clearInterval(traceTimer);
         traceTimer = null;
         traceState.textContent = "VERIFIED";
         runTrace.disabled = false;
-        runTrace.textContent = "EXECUTE AGAIN";
+        runTrace.textContent = "EXECUTE AGAIN [F9]";
+        registerValues[5].textContent = "0";
         window.setTimeout(() => stage.classList.remove("running"), 900);
       }
     };
     append();
     traceTimer = window.setInterval(append, 420);
+  });
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "F9") {
+      event.preventDefault();
+      if (!runTrace.disabled) runTrace.click();
+    }
   });
 
   const calls = $("#calls");

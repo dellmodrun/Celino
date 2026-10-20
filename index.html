@@ -6,9 +6,9 @@
   <meta name="description" content="Celino turns private knowledge into callable agent capabilities without exposing the underlying data.">
   <meta name="theme-color" content="#000000">
   <title>Celino — Private Capability Liquidity</title>
-  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020">
-  <link rel="stylesheet" href="celino.css?v=celino-20261020">
-  <style>.brand img{width:34px;height:34px}.core img{width:112px;height:112px}footer img{width:30px;height:30px}</style>
+  <link rel="icon" type="image/png" href="celino-logo.png?v=celino-20261020b">
+  <link rel="stylesheet" href="celino.css?v=celino-20261020b">
+  <style>.brand img{width:34px;height:34px}footer img{width:30px;height:30px}</style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to protocol</a>
@@ -46,45 +46,62 @@
         </div>
       </div>
 
-      <div class="seal-system" aria-label="Animated Celino sealed execution diagram">
-        <div class="seal-head">
-          <span>CELINO::SEALED_BUS</span>
-          <span id="traceState">IDLE</span>
+      <div class="kernel-monitor" id="sealStage" aria-label="Celino sealed execution kernel monitor">
+        <div class="kernel-head">
+          <span>CELINO KERNEL MONITOR / CELL:00</span>
+          <span>MODE:STRICT</span>
+          <span id="traceState">HALTED</span>
         </div>
-        <div class="seal-stage" id="sealStage">
-          <div class="axis axis-x"></div>
-          <div class="axis axis-y"></div>
-          <div class="packet packet-a">REQ</div>
-          <div class="packet packet-b">POLICY</div>
-          <div class="packet packet-c">PROOF</div>
-          <div class="port port-in"><b>01</b><span>ENCRYPTED<br>REQUEST</span></div>
-          <div class="port port-policy"><b>02</b><span>POLICY<br>GATE</span></div>
-          <div class="core">
-            <div class="core-frame">
-              <img src="celino-logo.png" alt="Celino sealed cell">
-            </div>
-            <span>SEALED CELL</span>
-          </div>
-          <div class="port port-out"><b>03</b><span>MINIMAL<br>OUTPUT</span></div>
-          <div class="port port-proof"><b>04</b><span>PROOF<br>CAPSULE</span></div>
-          <svg class="wires" viewBox="0 0 800 560" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M52 148 H250 L314 224"/>
-            <path d="M52 408 H242 L314 330"/>
-            <path d="M486 224 L550 148 H748"/>
-            <path d="M486 330 L558 408 H748"/>
-            <path class="signal s1" d="M52 148 H250 L314 224"/>
-            <path class="signal s2" d="M52 408 H242 L314 330"/>
-            <path class="signal s3" d="M486 224 L550 148 H748"/>
-            <path class="signal s4" d="M486 330 L558 408 H748"/>
-          </svg>
+        <div class="kernel-registers" id="registers">
+          <span><i>IP</i><b>0x0000</b></span>
+          <span><i>SP</i><b>0x7F40</b></span>
+          <span><i>R/O</i><b>1</b></span>
+          <span><i>RAW</i><b>DENY</b></span>
+          <span><i>TTL</i><b>0120</b></span>
+          <span><i>EXIT</i><b>—</b></span>
         </div>
-        <div class="seal-console">
+        <div class="kernel-workspace">
+          <section class="memory-pane">
+            <header><span>0000:7FFF / SEALED MEMORY</span><span>HEX + ASCII</span></header>
+            <pre id="memoryDump" aria-label="Sealed memory map"><code><i>0000</i>  43 45 4C 49 4E 4F 00 01  53 45 41 4C 45 44 00 00  CELINO..SEALED..
+<i>0010</i>  7B 69 6E 74 65 6E 74 7D  00 00 00 00 00 00 00 00  {intent}........
+<i>0020</i>  ██ ██ ██ ██ ██ ██ ██ ██  ██ ██ ██ ██ ██ ██ ██ ██  [PRIVATE SOURCE]
+<i>0030</i>  64 65 6E 79 3A 72 61 77  2C 6D 65 6D 6F 72 79 00  deny:raw,memory.
+<i>0040</i>  6F 75 74 3A 76 65 72 64  69 63 74 2C 70 72 6F 6F  out:verdict,proof
+<i>0050</i>  66 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  f...............
+<i>0060</i>  ██ ██ ██ ██ ██ ██ ██ ██  ██ ██ ██ ██ ██ ██ ██ ██  [KEY MATERIAL]
+<i>0070</i>  65 78 70 69 72 79 3A 31  32 30 00 00 00 00 00 00  expiry:120......
+<i>0080</i>  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
+<i>0090</i>  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................</code></pre>
+          </section>
+          <section class="policy-pane">
+            <header>POLICY VM / BYTECODE</header>
+            <ol>
+              <li><em>00</em><code>LOAD</code><span>intent.scope</span></li>
+              <li><em>01</em><code>CMP</code><span>owner.allow</span></li>
+              <li><em>02</em><code>JNZ</code><span>reject+0x14</span></li>
+              <li><em>03</em><code>MOUNT</code><span>source:r/o</span></li>
+              <li><em>04</em><code>EXEC</code><span>capability</span></li>
+              <li><em>05</em><code>MASK</code><span>deny.fields</span></li>
+              <li><em>06</em><code>HASH</code><span>output</span></li>
+              <li><em>07</em><code>SEAL</code><span>capsule</span></li>
+              <li><em>08</em><code>ZERO</code><span>workspace</span></li>
+              <li><em>09</em><code>RET</code><span>proof</span></li>
+            </ol>
+          </section>
+        </div>
+        <div class="kernel-trace">
+          <div class="trace-head"><span>SEQ</span><span>CALL</span><span>RESULT</span></div>
           <ol id="traceLog" aria-live="polite">
-            <li><time>00</time><span>scope</span><b>awaiting bounded request</b></li>
-            <li><time>01</time><span>policy</span><b>no raw access granted</b></li>
-            <li><time>02</time><span>output</span><b>minimum disclosure enforced</b></li>
+            <li><time>00</time><span>boot</span><b>policy vm loaded / execution halted</b></li>
+            <li><time>01</time><span>guard</span><b>raw read bit = 0</b></li>
+            <li><time>02</time><span>wait</span><b>bounded intent required</b></li>
           </ol>
-          <button id="runTrace" type="button">EXECUTE SEALED TRACE</button>
+        </div>
+        <div class="kernel-foot">
+          <span>NO NETWORK I/O</span>
+          <span>NO PERSISTENT MEMORY</span>
+          <button id="runTrace" type="button">RUN ATTESTATION [F9]</button>
         </div>
       </div>
     </section>
@@ -301,6 +318,6 @@ OUTPUT   signed_result + proof_capsule</code></pre>
     <p><a href="https://github.com/dellmodrun/Celino" target="_blank" rel="noopener">SOURCE↗</a> / CA:TBA / <span id="year"></span></p>
   </footer>
 
-  <script src="celino.js?v=celino-20261020"></script>
+  <script src="celino.js?v=celino-20261020b"></script>
 </body>
 </html>
