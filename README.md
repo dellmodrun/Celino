@@ -49,8 +49,8 @@ Then open `http://127.0.0.1:4210/`.
 ```text
 Celino/
 ├── index.html          # protocol interface
-├── style.css           # VGA technical-punk visual system
-├── app.js              # trace, privacy budget and proof capsule
+├── celino.css          # VGA technical-punk visual system
+├── celino.js           # trace, privacy budget and proof capsule
 ├── celino-logo.png     # project mark
 ├── Web437_IBM_VGA_8x16.woff
 └── docs/PROTOCOL.md    # architecture and trust boundaries
