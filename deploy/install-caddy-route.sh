@@ -25,20 +25,35 @@ celino.167-99-74-236.sslip.io {
 EOF
 fi
 
-# Keep Ohmium isolated and serve Celino from its own TLS virtual host. Earlier
-# dedicated-host checks read a stale bind mount; the host itself is valid.
-if ! grep -q 'CELINO_ROUTE_V5' "$CADDYFILE"; then
+# Reuse Ohmium's issued TLS endpoint without requesting another certificate.
+# Both routes use handle, so Caddy treats them as one mutually-exclusive group.
+if ! grep -q 'CELINO_ROUTE_V6' "$CADDYFILE"; then
   awk '
     /^ohmium\.167-99-74-236\.sslip\.io \{$/ {
       print
-      print "  # CELINO_ROUTE_V5"
+      print "  # CELINO_ROUTE_V6"
       print "  encode zstd gzip"
-      print "  reverse_proxy ohmium-core:4210"
+      print "  handle_path /celino-api/* {"
+      print "    reverse_proxy celino-core:4320"
+      print "  }"
+      print "  handle {"
+      print "    reverse_proxy ohmium-core:4210"
+      print "  }"
       replacing = 1
       next
     }
     replacing && /^  header \{$/ { replacing = 0; print; next }
     replacing { next }
+    /^celino\.167-99-74-236\.sslip\.io \{$/ { dropping = 1; depth = 1; next }
+    dropping {
+      copy = $0
+      opens = gsub(/\{/, "{", copy)
+      copy = $0
+      closes = gsub(/\}/, "}", copy)
+      depth += opens - closes
+      if (depth <= 0) dropping = 0
+      next
+    }
     { print }
   ' "$CADDYFILE" > "${CADDYFILE}.celino-tmp"
   cat "${CADDYFILE}.celino-tmp" > "$CADDYFILE"
@@ -49,7 +64,7 @@ cd /opt/cennomo
 # Older deployments replaced the bind-mounted file inode. Recreate Caddy once
 # when its mounted view lags behind the host file; subsequent edits preserve
 # the inode and only require a zero-downtime reload.
-if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V5' /etc/caddy/Caddyfile; then
+if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V6' /etc/caddy/Caddyfile; then
   docker compose -f docker-compose.production.yml up -d --force-recreate caddy
 fi
 docker compose -f docker-compose.production.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile
