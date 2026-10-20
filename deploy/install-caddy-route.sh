@@ -46,9 +46,16 @@ if ! grep -q 'CELINO_ROUTE_V4' "$CADDYFILE"; then
     replacing { next }
     { print }
   ' "$CADDYFILE" > "${CADDYFILE}.celino-tmp"
-  mv "${CADDYFILE}.celino-tmp" "$CADDYFILE"
+  cat "${CADDYFILE}.celino-tmp" > "$CADDYFILE"
+  rm "${CADDYFILE}.celino-tmp"
 fi
 
 cd /opt/cennomo
+# Older deployments replaced the bind-mounted file inode. Recreate Caddy once
+# when its mounted view lags behind the host file; subsequent edits preserve
+# the inode and only require a zero-downtime reload.
+if ! docker compose -f docker-compose.production.yml exec -T caddy grep -q 'CELINO_ROUTE_V4' /etc/caddy/Caddyfile; then
+  docker compose -f docker-compose.production.yml up -d --force-recreate caddy
+fi
 docker compose -f docker-compose.production.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile
 docker compose -f docker-compose.production.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
