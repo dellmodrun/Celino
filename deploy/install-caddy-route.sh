@@ -61,6 +61,7 @@ if ! grep -q 'CELINO_ROUTE_V6' "$CADDYFILE"; then
 fi
 
 cd /opt/cennomo
+export CENNOMO_HOST="${CENNOMO_HOST:-167-99-74-236.sslip.io}"
 COMPOSE='docker compose --env-file .env.production -f docker-compose.production.yml'
 # Older deployments replaced the bind-mounted file inode. Recreate Caddy once
 # when its mounted view lags behind the host file; subsequent edits preserve
