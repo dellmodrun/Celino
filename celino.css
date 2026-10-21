@@ -340,6 +340,21 @@ input[type="range"]::-webkit-slider-thumb { width: 12px; height: 20px; appearanc
 .registry-record code { color: var(--green-hi); font: inherit; overflow-wrap: anywhere; }
 .registry-record time { color: var(--dim); }
 .registry-record span { color: var(--coral); }
+.registry-head { color: var(--dim); background: var(--panel); }
+.registry-head > * { min-height: 42px; padding-top: 11px; padding-bottom: 11px; color: var(--dim) !important; font-weight: normal; }
+.owner-panel { margin-top: 26px; border: 1px solid var(--line-hi); }
+.owner-summary { margin: 0; padding: 18px 20px; border-bottom: 1px solid var(--line); color: var(--dim); line-height: 1.4; }
+.owner-capabilities > p { margin: 0; padding: 22px 20px; color: var(--dim); }
+.owner-record { display: grid; grid-template-columns: minmax(180px,1fr) minmax(240px,1.5fr) 120px 112px; align-items: stretch; border-top: 1px solid var(--line); }
+.owner-record:first-child { border-top: 0; }
+.owner-record > * { min-height: 52px; display: flex; align-items: center; padding: 12px 14px; border-right: 1px solid var(--line); }
+.owner-record > *:last-child { border-right: 0; }
+.owner-record b { color: var(--white); font-weight: normal; }
+.owner-record code { color: var(--green-hi); font: inherit; overflow-wrap: anywhere; }
+.owner-record span { color: var(--dim); }
+.owner-record button { justify-content: center; border: 0; color: var(--red); background: #100807; cursor: pointer; font: inherit; }
+.owner-record button:hover, .owner-record button:focus-visible { color: #000; background: var(--red); outline: none; }
+.owner-record button:disabled { color: var(--dim); background: #080808; cursor: wait; }
 .build-links { display: flex; gap: 30px; margin-top: 30px; }
 
 footer { display: grid; grid-template-columns: 190px 1fr auto; align-items: center; min-height: 100px; border-bottom: 8px solid var(--coral); }
@@ -439,6 +454,9 @@ footer p:last-child { text-align: right; }
   .output-actions button { border-right: 0; border-bottom: 1px solid var(--line); }
   .registry-record { grid-template-columns: 1fr; }
   .registry-record > * { border-right: 0; border-bottom: 1px solid var(--line); }
+  .registry-head { display: none; }
+  .owner-record { grid-template-columns: 1fr; }
+  .owner-record > * { border-right: 0; border-bottom: 1px solid var(--line); }
   footer { grid-template-columns: 1fr; }
   footer p:last-child { text-align: left; }
 }

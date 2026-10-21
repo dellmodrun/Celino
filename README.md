@@ -55,6 +55,7 @@ The production API is a separate, dependency-free Node service. It provides:
 - `POST /api/auth/challenge` and `POST /api/auth/verify` for signed Solana wallet sessions;
 - `GET /api/session` for session verification;
 - `GET|POST /api/capabilities` for public discovery and authenticated publication;
+- `GET /api/owner/capabilities` for the signed owner's complete management view;
 - `DELETE /api/capabilities/:id` for owner-authorized revocation;
 - `GET /api/health` and `GET /api/status` for real service state.
 

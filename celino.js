@@ -164,6 +164,7 @@
       sessionToken = verified.token;
       sessionStorage.setItem("celino.session", sessionToken);
       showConnected(verified.wallet, true);
+      await loadOwnerCapabilities();
     } catch (error) { walletError.textContent = error.message || "Wallet authentication failed."; }
     finally { button.disabled = false; button.textContent = "SIGN IN"; }
   }
@@ -179,6 +180,7 @@
     walletTrigger.textContent = "CONNECT WALLET";
     walletTrigger.classList.remove("connected", "authenticated");
     renderWallets();
+    loadOwnerCapabilities();
   }
 
   walletTrigger.addEventListener("click", () => { walletError.textContent = ""; renderWallets(); walletDialog.showModal(); });
@@ -194,6 +196,7 @@
       const current = await api("/api/session");
       activeAccount = { address: current.wallet };
       showConnected(current.wallet, true);
+      await loadOwnerCapabilities();
     } catch { sessionToken = ""; sessionStorage.removeItem("celino.session"); }
   }
 
@@ -475,7 +478,7 @@
       button.textContent = "PUBLISHING";
       await api("/api/capabilities", { method: "POST", body: currentManifest });
       button.textContent = "PUBLISHED";
-      await loadRegistry();
+      await Promise.all([loadRegistry(), loadOwnerCapabilities()]);
     } catch (error) {
       button.textContent = "PUBLISH FAILED";
       manifestError.textContent = error.message;
@@ -499,13 +502,72 @@
     $("#registryList").append(row);
   }
 
+  function appendOwnerRecord(capability) {
+    const row = document.createElement("div");
+    row.className = "owner-record";
+    const name = document.createElement("b"), digest = document.createElement("code"), status = document.createElement("span"), action = document.createElement("button");
+    name.textContent = `${capability.capability}@${capability.version}`;
+    digest.textContent = capability.policyDigest;
+    status.textContent = capability.status.toUpperCase();
+    action.type = "button";
+    action.textContent = capability.status === "published" ? "REVOKE" : "REVOKED";
+    action.disabled = capability.status !== "published";
+    if (capability.status === "published") action.addEventListener("click", async () => {
+      if (!window.confirm(`Revoke ${capability.capability}@${capability.version}? New discovery results will no longer include this record.`)) return;
+      action.disabled = true;
+      action.textContent = "REVOKING";
+      try {
+        await api(`/api/capabilities/${encodeURIComponent(capability.id)}`, { method: "DELETE" });
+        await Promise.all([loadRegistry(), loadOwnerCapabilities()]);
+      } catch (error) {
+        action.disabled = false;
+        action.textContent = "RETRY";
+        $("#ownerSummary").textContent = `Revocation failed: ${error.message}`;
+      }
+    });
+    row.append(name, digest, status, action);
+    $("#ownerCapabilities").append(row);
+  }
+
+  async function loadOwnerCapabilities() {
+    const state = $("#ownerState"), summary = $("#ownerSummary"), list = $("#ownerCapabilities");
+    list.replaceChildren();
+    if (!sessionToken) {
+      state.textContent = "LOCKED";
+      summary.textContent = "Connect and sign in with the publishing wallet to manage its capability records.";
+      const empty = document.createElement("p");
+      empty.textContent = "No authenticated owner session.";
+      list.append(empty);
+      return;
+    }
+    state.textContent = "SYNCING";
+    try {
+      const owned = await api("/api/owner/capabilities");
+      state.textContent = "AUTHENTICATED";
+      state.className = "online";
+      summary.textContent = `${shortAddress(owned.wallet)} controls ${owned.capabilities.length} ${owned.capabilities.length === 1 ? "record" : "records"}. Revocation is immediate in the Core registry.`;
+      if (!owned.capabilities.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "This wallet has not published a capability yet.";
+        list.append(empty);
+      } else owned.capabilities.forEach(appendOwnerRecord);
+    } catch (error) {
+      state.textContent = "SESSION ERROR";
+      state.className = "offline";
+      const message = document.createElement("p");
+      message.textContent = `Owner records unavailable: ${error.message}`;
+      list.append(message);
+    }
+  }
+
   async function loadRegistry() {
     const coreState = $("#coreState"), coreDetail = $("#coreDetail");
     try {
-      const [health, registry] = await Promise.all([api("/api/health"), api("/api/capabilities")]);
+      const [health, status, registry] = await Promise.all([api("/api/health"), api("/api/status"), api("/api/capabilities")]);
       coreState.textContent = "OPERATIONAL";
       coreState.className = "online";
-      coreDetail.textContent = `${health.service} v${health.version} / live authenticated registry`;
+      const checked = new Date(status.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      coreDetail.textContent = `${health.service} v${health.version} / uptime ${status.uptimeSec || health.uptimeSec}s / ${status.requests} requests / verified ${checked}`;
       $("#registryCount").textContent = `${registry.capabilities.length} ${registry.capabilities.length === 1 ? "RECORD" : "RECORDS"}`;
       $("#registryList").replaceChildren();
       if (!registry.capabilities.length) {
@@ -526,6 +588,8 @@
 
   restoreSession();
   loadRegistry();
+  loadOwnerCapabilities();
+  window.setInterval(loadRegistry, 30000);
 
   const sections = $$('section[id]');
   const links = $$('.topbar nav a');

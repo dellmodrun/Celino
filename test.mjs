@@ -51,9 +51,16 @@ try {
   assert.equal(listed.value.capabilities.length, 1);
   assert.notEqual(listed.value.capabilities[0].owner, address);
 
+  const owned = await call("/api/owner/capabilities", { headers: { authorization: `Bearer ${verified.value.token}` } });
+  assert.equal(owned.response.status, 200);
+  assert.equal(owned.value.capabilities.length, 1);
+  assert.equal(owned.value.capabilities[0].id, published.value.capability.id);
+
   const revoked = await call(`/api/capabilities/${published.value.capability.id}`, { method: "DELETE", headers: { authorization: `Bearer ${verified.value.token}` } });
   assert.equal(revoked.response.status, 200);
   assert.equal((await call("/api/capabilities")).value.capabilities.length, 0);
+  const ownedAfterRevoke = await call("/api/owner/capabilities", { headers: { authorization: `Bearer ${verified.value.token}` } });
+  assert.equal(ownedAfterRevoke.value.capabilities[0].status, "revoked");
   console.log("Celino Core integration test passed");
 } finally {
   child.kill();

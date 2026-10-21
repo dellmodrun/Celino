@@ -147,6 +147,14 @@ const server = http.createServer(async (request, response) => {
       return active ? json(response, 200, { authenticated: true, wallet: active.wallet, expiresAt: active.expiresAt }) : json(response, 401, { authenticated: false });
     }
 
+    if (request.method === "GET" && pathname === "/api/owner/capabilities") {
+      const active = session(request); if (!active) return json(response, 401, { error: "signed wallet session required" });
+      const capabilities = state.capabilities
+        .filter((item) => item.owner === active.wallet)
+        .map(({ owner, ...item }) => item);
+      return json(response, 200, { at: now(), wallet: active.wallet, capabilities });
+    }
+
     if (request.method === "POST" && pathname === "/api/capabilities") {
       const active = session(request); if (!active) return json(response, 401, { error: "signed wallet session required" });
       const manifest = validateManifest(await body(request)), canonical = JSON.stringify(manifest), policyDigest = sha256(canonical);

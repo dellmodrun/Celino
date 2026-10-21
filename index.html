@@ -401,11 +401,11 @@ OUTPUT   signed_result + proof_capsule</code></pre>
       <article>
         <div class="section-head">
           <h2>BUILD A CAPABILITY.<br>EXPORT THE CONTRACT.</h2>
-          <p class="section-note">This workbench validates and compiles a portable capability manifest entirely in your browser. Private source material is never requested.</p>
+          <p class="section-note">This workbench validates locally, then publishes a signed manifest to Celino Core. Private source material is never requested.</p>
         </div>
         <div class="manifest-studio">
           <form id="manifestForm" novalidate>
-            <div class="studio-title"><span>CAPABILITY MANIFEST / EDITOR</span><b>LOCAL ONLY</b></div>
+            <div class="studio-title"><span>CAPABILITY MANIFEST / EDITOR</span><b>NO SOURCE INPUT</b></div>
             <div class="manifest-grid">
               <label>CAPABILITY NAME<input id="manifestName" required pattern="[a-z0-9][a-z0-9-]{2,63}" value="private-code-risk" autocomplete="off"></label>
               <label>VERSION<input id="manifestVersion" required pattern="[0-9]+\.[0-9]+\.[0-9]+" value="1.0.0" autocomplete="off"></label>
@@ -441,8 +441,8 @@ OUTPUT   signed_result + proof_capsule</code></pre>
           </div>
           <div>
             <span>03 / REGISTER</span>
-            <b>Publish after contract activation</b>
-            <p>Solana registry submission remains unavailable until the official contract address is published. Exported manifests are ready for that interface.</p>
+            <b>Publish to Celino Core</b>
+            <p>A signed wallet session can publish the manifest to the live Core Registry now. The Solana mirror activates only after the official program is published.</p>
           </div>
         </div>
         <div class="network-readiness" aria-label="Celino component readiness">
@@ -456,7 +456,13 @@ OUTPUT   signed_result + proof_capsule</code></pre>
         </div>
         <div class="registry-panel">
           <div class="studio-title"><span>PUBLIC CAPABILITY REGISTRY</span><b id="registryCount">0 RECORDS</b></div>
+          <div class="registry-record registry-head"><b>CAPABILITY</b><code>POLICY DIGEST</code><span>OWNER</span><time>CREATED</time></div>
           <div id="registryList" class="registry-list"><p>Connecting to Celino Core…</p></div>
+        </div>
+        <div class="owner-panel">
+          <div class="studio-title"><span>OWNER CONTROL / SIGNED SESSION</span><b id="ownerState">LOCKED</b></div>
+          <p class="owner-summary" id="ownerSummary">Connect and sign in with the publishing wallet to manage its capability records.</p>
+          <div id="ownerCapabilities" class="owner-capabilities"><p>No authenticated owner session.</p></div>
         </div>
         <div class="build-links">
           <a href="https://huggingface.co/" target="_blank" rel="noopener">[ HUGGING FACE ]</a>
@@ -472,6 +478,6 @@ OUTPUT   signed_result + proof_capsule</code></pre>
     <p><a href="https://huggingface.co/" target="_blank" rel="noopener">HUGGING FACE↗</a> / CA:TBA / <span id="year"></span></p>
   </footer>
 
-  <script src="celino.js?v=celino-20261020h"></script>
+  <script src="celino.js?v=celino-20261021a"></script>
 </body>
 </html>
