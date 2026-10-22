@@ -8,9 +8,9 @@ chown -R 1000:1000 data
 if [ ! -f .env.production ]; then
   umask 077
   cat > .env.production <<'EOF'
-CELINO_ALLOWED_ORIGINS=https://dellmodrun.github.io,http://127.0.0.1:4210,http://localhost:4210
-CELINO_PUBLIC_URI=https://dellmodrun.github.io/Celino/
-CELINO_SIGNIN_DOMAIN=dellmodrun.github.io
+CELINO_ALLOWED_ORIGINS=https://celino.run,https://dellmodrun.github.io,http://127.0.0.1:4210,http://localhost:4210
+CELINO_PUBLIC_URI=https://celino.run/
+CELINO_SIGNIN_DOMAIN=celino.run
 EOF
 fi
 

@@ -90,7 +90,7 @@ The browser instruments, signed wallet authentication and off-chain capability R
 
 ## Links
 
-- Website: <https://dellmodrun.github.io/Celino/>
+- Website: <https://celino.run/>
 - Source: <https://github.com/dellmodrun/Celino>
 
 ## License
