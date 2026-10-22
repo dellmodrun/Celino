@@ -61,9 +61,8 @@ button { border-radius: 0; }
 .top-actions > * { display: grid; place-items: center; padding: 0 16px; border-right: 1px solid var(--line); }
 .top-actions .ca { color: var(--yellow); min-width: 92px; }
 .top-actions .social-icon { width: 58px; padding: 0; color: var(--text); }
-.social-icon svg, .social-icon .hf-mark { display: block; width: 19px; height: 19px; }
+.social-icon svg { display: block; width: 19px; height: 19px; }
 .social-icon svg { fill: currentColor; stroke: none; }
-.social-icon .hf-mark { background: currentColor; -webkit-mask: url("assets/hf-logo-monochrome.svg") center/contain no-repeat; mask: url("assets/hf-logo-monochrome.svg") center/contain no-repeat; }
 .wallet-trigger { min-width: 174px; border: 0; color: #000; background: var(--green); cursor: pointer; }
 .wallet-trigger:hover, .wallet-trigger:focus-visible { background: var(--yellow); outline: none; }
 .wallet-trigger.connected { color: var(--green-hi); background: #071008; }
